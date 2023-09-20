@@ -1,23 +1,34 @@
 #!/usr/bin/python3
-"""This is the user class"""
+""" holds class State"""
+import models
 from models.base_model import BaseModel, Base
-from sqlalchemy import Column, Integer, String
+from models.city import City
+from os import getenv
+import sqlalchemy
+from sqlalchemy import Column, String, ForeignKey
 from sqlalchemy.orm import relationship
 
 
-class User(BaseModel, Base):
-    """This is the class for user
-    Attributes:
-        __tablename__: Table name
-        email: email address
-        password: password for you login
-        first_name: first name
-        last_name: last name
-    """
-    __tablename__ = "users"
-    email = Column(String(128), nullable=False)
-    password = Column(String(128), nullable=False)
-    first_name = Column(String(128), nullable=True)
-    last_name = Column(String(128), nullable=True)
-    places = relationship("Place", cascade="all, delete", backref="user")
-    reviews = relationship("Review", cascade="all, delete", backref="user")
+class State(BaseModel, Base):
+    """Representation of state """
+    if models.storage_t == "db":
+        __tablename__ = 'states'
+        name = Column(String(128), nullable=False)
+        cities = relationship("City", backref="state")
+    else:
+        name = ""
+
+    def __init__(self, *args, **kwargs):
+        """initializes state"""
+        super().__init__(*args, **kwargs)
+
+    if models.storage_t != "db":
+        @property
+        def cities(self):
+            """getter for list of city instances related to the state"""
+            city_list = []
+            all_cities = models.storage.all(City)
+            for city in all_cities.values():
+                if city.state_id == self.id:
+                    city_list.append(city)
+            return city_list
